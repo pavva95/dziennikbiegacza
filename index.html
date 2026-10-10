@@ -182,6 +182,13 @@ textarea{resize:vertical;min-height:60px}
       <label class="f full">E-mail<input type="email" id="lEmail" autocomplete="username" required></label>
       <label class="f full">Hasło<input type="password" id="lPass" autocomplete="current-password" required></label>
     </div>
+    <details style="margin-top:10px"><summary class="note">Ustawienia połączenia (jeśli logowanie nie działa)</summary>
+      <div class="g" style="margin-top:8px">
+        <label class="f full">Adres bazy (Project URL)<input type="text" id="cUrl" placeholder="https://xxxx.supabase.co" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+        <label class="f full">Klucz (publishable lub anon)<input type="text" id="cKey" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+      </div>
+    </details>
+    <p class="note" id="loginInfo" style="margin-top:8px"></p>
     <div class="err" id="loginErr" role="alert"></div>
     <div class="acts"><button type="submit" class="primary">Zaloguj</button></div>
   </form>
@@ -636,21 +643,37 @@ function syncOut(){
 }
 function showLogin(){const d=$("loginDlg");if(!d.open)d.showModal()}
 function startCloud(email){userEmail=email||"";cloud=true;gotServer=false;$("loginDlg").open&&$("loginDlg").close();pull()}
+const VER="3";
+const getCfg=()=>{try{const o=JSON.parse(localStorage.getItem("dziennik-cfg")||"null");if(o&&o.url&&o.key)return o}catch(e){}return{url:CFG.url||"",key:CFG.key||""}};
+function makeClient(){
+  const c=getCfg();let u=String(c.url).trim(),host="";
+  try{const x=new URL(u);u=x.origin;host=x.host}catch(e){}
+  $("loginInfo").textContent=`Wersja ${VER} · adres bazy: ${host||"(brak lub nieprawidłowy)"}`+(host&&!/\.supabase\.co$/.test(host)?" – to nie wygląda na adres Supabase (powinien kończyć się na .supabase.co)":"");
+  if(!host||!String(c.key).trim())return false;
+  sb=window.supabase.createClient(u,String(c.key).trim(),{auth:{persistSession:true,autoRefreshToken:true}});
+  sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"){cloud=false;gotServer=false;remote=new Map();userEmail="";updateBanner();showLogin()}});
+  return true;
+}
 async function cloudInit(){
-  if(!CFG.url||!CFG.key||!window.supabase){updateBanner();return}
+  if(!window.supabase){$("loginInfo").textContent="Nie załadowała się biblioteka Supabase (sprawdź internet) – działam tylko lokalnie.";updateBanner();return}
   try{
-    sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true}});
-    sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"){cloud=false;gotServer=false;remote=new Map();userEmail="";updateBanner();showLogin()}});
+    if(!makeClient()){showLogin();return}
     const {data}=await sb.auth.getSession();
     if(data&&data.session)startCloud(data.session.user.email);else showLogin();
-  }catch(e){cloudErr=errTxt(e);updateBanner()}
+  }catch(e){cloudErr=errTxt(e);updateBanner();showLogin()}
 }
 $("loginDlg").addEventListener("cancel",e=>e.preventDefault());
 $("loginForm").onsubmit=async e=>{
   e.preventDefault();$("loginErr").textContent="";
-  const {data,error}=await sb.auth.signInWithPassword({email:$("lEmail").value.trim(),password:$("lPass").value});
-  if(error){$("loginErr").textContent="Nie udało się zalogować: "+(/invalid login/i.test(error.message)?"zły e-mail lub hasło.":error.message);return}
-  $("lPass").value="";startCloud(data.user.email);
+  const nu=$("cUrl").value.trim(),nk=$("cKey").value.trim(),old=getCfg();
+  if(nu||nk){try{localStorage.setItem("dziennik-cfg",JSON.stringify({url:nu||old.url,key:nk||old.key}))}catch(x){}}
+  if(!window.supabase){$("loginErr").textContent="Nie załadowała się biblioteka Supabase – sprawdź internet i odśwież stronę.";return}
+  if(nu||nk||!sb){if(!makeClient()){$("loginErr").textContent="Brakuje adresu lub klucza bazy – rozwiń „Ustawienia połączenia” poniżej i uzupełnij.";return}}
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email:$("lEmail").value.trim(),password:$("lPass").value});
+    if(error){$("loginErr").textContent="Nie udało się zalogować: "+(/invalid login/i.test(error.message)?"zły e-mail lub hasło.":error.message)+(error.status?" (kod "+error.status+")":"");return}
+    $("lPass").value="";startCloud(data.user.email);
+  }catch(x){$("loginErr").textContent="Błąd połączenia: "+errTxt(x)}
 };
 $("logout").onclick=async()=>{$("dataDlg").close();if(sb)await sb.auth.signOut()};
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&cloud){syncOut();pull()}});

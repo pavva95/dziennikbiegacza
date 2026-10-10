@@ -1,5 +1,5 @@
 // Prosty service worker: najpierw sieć (zawsze świeża wersja), a bez internetu - kopia z pamięci.
-const C = "dziennik-v1";
+const C = "dziennik-v2";
 self.addEventListener("install", e => {
   self.skipWaiting();
   e.waitUntil(caches.open(C).then(c => c.addAll(["./", "index.html", "config.js", "manifest.webmanifest", "icon-192.png"])).catch(() => {}));
@@ -12,7 +12,7 @@ self.addEventListener("fetch", e => {
   if (r.method !== "GET") return;
   if (new URL(r.url).hostname.endsWith("supabase.co")) return;   // dane z bazy nigdy nie idą do pamięci podręcznej
   e.respondWith(
-    fetch(r).then(res => {
+    (new URL(r.url).origin === location.origin ? fetch(r.url, { cache: "no-cache" }) : fetch(r)).then(res => {
       if (res.ok || res.type === "opaque") { const cp = res.clone(); caches.open(C).then(c => c.put(r, cp)); }
       return res;
     }).catch(() => caches.match(r).then(m => m || caches.match("./")))
