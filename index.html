@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1B2A3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dziennik biegacza">
+<title>Dziennik biegacza</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231B2A3A'/%3E%3Cpath d='M18 68h64M18 52h64M18 36h64' stroke='%233B4CE0' stroke-width='6'/%3E%3Ccircle cx='62' cy='52' r='9' fill='%231F9E89'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --ink:#1B2A3A; --muted:#5E6B78; --line:#D6DCE3;
+  --easy:#1F9E89; --qual:#3B4CE0; --race:#D98E00; --soft:#F5F7F9; --danger:#C0392B;
+  --font:"Avenir Next","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0F1720;--surface:#18232F;--ink:#E8EDF2;--muted:#9AA8B5;--line:#2A3846;--soft:#1E2B38;
+        --easy:#3FC2AB;--qual:#7C8BFF;--race:#F0B030;--danger:#FF7A6B}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--font);font-variant-numeric:tabular-nums;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(96px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 0 10px}
+h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.01em}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--qual);outline-offset:2px}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink)}
+.tabs{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin:4px 0 14px}
+.tabs button{flex:1;border:0;background:transparent;padding:9px 2px;border-radius:9px;font-weight:600;color:var(--muted)}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--surface)}
+.bar-tools{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pills button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:13px}
+.pills button[aria-pressed=true]{border-color:var(--ink);font-weight:700}
+select.yr{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.wk{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 6px;font-size:13px;color:var(--muted);font-weight:700}
+.wk b{color:var(--ink)}
+.row{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px}
+.row .d{display:flex;flex-direction:column;align-items:center;line-height:1.15;color:var(--muted);font-size:12px}
+.row .d b{font-size:12px;color:var(--ink)}
+.row .d span{font-size:15px;font-weight:700;color:var(--ink)}
+.row .nm{display:block;font-weight:650;overflow:hidden;text-overflow:ellipsis}
+.row .sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12.5px;margin-top:2px}
+.row .n{text-align:right;white-space:nowrap}
+.row .n b{display:block;font-size:16px}
+.row .n small{color:var(--muted);font-size:12px}
+.chip{font-style:normal;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;color:#fff}
+.c-Spokojny{background:var(--easy)} .c-Jakościowy{background:var(--qual)} .c-Zawody{background:var(--race)}
+:root .c-Spokojny,:root .c-Jakościowy,:root .c-Zawody{color:#fff}
+@media (prefers-color-scheme:dark){.chip{color:#0F1720!important}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.card .top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.card h3{margin:0;font-size:16px}
+.card .rng{color:var(--muted);font-size:13px}
+.card .big{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.card .big small{font-size:14px;font-weight:600;color:var(--muted);margin-left:3px}
+.split{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--soft);margin:12px 0}
+.split i{display:block;height:100%}
+.split .e{background:var(--easy)} .split .q{background:var(--qual)} .split .r{background:var(--race)}
+dl.st{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 8px;margin:0}
+dl.st div{min-width:0}
+dl.st dt{font-size:12px;color:var(--muted)}
+dl.st dd{margin:0;font-weight:700;font-size:14px}
+dl.st dd small{font-weight:500;color:var(--muted)}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:17px}
+.chart .e{fill:var(--easy)} .chart .q{fill:var(--qual)} .chart .r{fill:var(--race)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:26px 18px;text-align:center}
+.empty p{margin:0 0 14px;color:var(--muted)}
+.primary{background:var(--ink);color:var(--surface);border:0;border-radius:12px;padding:11px 18px;font-weight:700}
+.fab{position:fixed;right:max(16px,calc(50% - 364px));bottom:calc(18px + env(safe-area-inset-bottom));box-shadow:0 6px 18px rgba(0,0,0,.28);padding:14px 20px;border-radius:99px;z-index:5}
+dialog{border:0;border-radius:16px;padding:0;width:min(640px,calc(100vw - 20px));max-height:calc(100dvh - 20px);background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(10,18,28,.55)}
+.dlg{padding:18px;overflow:auto;max-height:calc(100dvh - 20px)}
+.dlg h2{margin:0 0 12px;font-size:19px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted);font-weight:600;min-width:0}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--soft);color:var(--ink);font-size:16px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:60px}
+.segs h4{margin:16px 0 4px;font-size:14px}
+.segs .hint{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
+.seg{border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:8px;background:var(--soft)}
+.seg .l1{display:flex;gap:8px;margin-bottom:6px}
+.seg .l1 select{flex:1;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--surface);font-size:16px}
+.seg .l2{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.seg .l2 label.f input{background:var(--surface);padding:8px 8px}
+.x{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:40px;font-size:18px;color:var(--danger)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.acts .sp{flex:1}
+.danger{color:var(--danger);border-color:var(--danger)}
+.err{color:var(--danger);font-size:13px;min-height:18px;margin-top:10px}
+.note{font-size:13px;color:var(--muted)}
+.dataacts{display:grid;gap:8px;margin:12px 0}
+.banner[hidden]{display:none}
+.banner{background:var(--surface);border:1px solid var(--race);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:13.5px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.cal-h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cal-h h2{flex:1;margin:0;font-size:18px;text-align:center}
+.cal-h .ghost{min-width:40px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr) 50px;gap:4px;margin-bottom:12px}
+.cn{font-size:12px;color:var(--muted);text-align:center;font-weight:700;padding:2px 0}
+.cd{display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:62px;padding:5px 2px 6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0}
+.cd .dn{font-size:12px;color:var(--muted);align-self:flex-start;padding-left:4px;line-height:1}
+.cd .km{font-weight:800;font-size:14px;line-height:1}
+.cd .dots{display:flex;gap:3px;min-height:7px}
+.cd .dots i{width:7px;height:7px;border-radius:50%;display:block}
+.cd.out{opacity:.45}
+.cd.hq{background:color-mix(in srgb,var(--qual) 14%,var(--surface))}
+.cd.hr{background:color-mix(in srgb,var(--race) 18%,var(--surface))}
+.cd.today{border:2px solid var(--ink)}
+.cd.sel{box-shadow:inset 0 0 0 2px var(--qual)}
+.cs{display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted)}
+.sec{margin:14px 0 4px;font-size:15px}
+#loginDlg::backdrop{background:rgba(10,18,28,.85)}
+@media (max-width:480px){dl.st{grid-template-columns:repeat(2,1fr)} .row{grid-template-columns:46px 1fr auto;gap:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Dziennik biegacza</h1>
+    <button class="ghost" id="dataBtn">Kopia danych</button>
+  </header>
+  <nav class="tabs" aria-label="Widok">
+    <button data-v="log" aria-pressed="true">Treningi</button>
+    <button data-v="cal" aria-pressed="false">Kalendarz</button>
+    <button data-v="weeks" aria-pressed="false">Tygodnie</button>
+    <button data-v="months" aria-pressed="false">Miesiące</button>
+  </nav>
+  <div id="warn" class="banner" hidden></div>
+  <main id="view"></main>
+</div>
+<button class="primary fab" id="addBtn">+ Nowy trening</button>
+
+<dialog id="formDlg">
+  <form class="dlg" id="form" autocomplete="off">
+    <h2 id="formTitle">Nowy trening</h2>
+    <div class="g">
+      <label class="f">Data<input type="date" id="fDate" required></label>
+      <label class="f">Typ treningu<select id="fType"></select></label>
+      <label class="f full">Nazwa<input type="text" id="fName" placeholder="np. 5×1 km na bieżni"></label>
+      <label class="f">Dystans [km]<input type="text" id="fKm" inputmode="decimal" placeholder="np. 8,7"></label>
+      <label class="f">Czas<input type="text" id="fTime" inputmode="numeric" placeholder="45:00 lub 1:05:30"></label>
+      <label class="f">Tętno średnie<input type="text" id="fHr" inputmode="numeric" placeholder="bpm"></label>
+      <label class="f">Odczucie (1–10)<input type="text" id="fRpe" inputmode="numeric" placeholder="1 lekko – 10 maks."></label>
+      <label class="f full">Notatki<textarea id="fNotes"></textarea></label>
+    </div>
+    <div class="segs">
+      <h4>Odcinki (opcjonalnie)</h4>
+      <p class="hint">Rozpisz rozgrzewkę, powtórzenia i przerwy. Wpisz czas albo tempo – drugie policzy się samo. Jeśli zostawisz dystans i czas treningu puste, zsumują się z odcinków.</p>
+      <div id="segList"></div>
+      <div class="acts" style="margin-top:6px">
+        <button type="button" class="ghost" id="segAdd">+ Odcinek</button>
+        <button type="button" class="ghost" id="segDup">Powiel ostatni</button>
+      </div>
+    </div>
+    <div class="err" id="err" role="alert"></div>
+    <div class="acts">
+      <button type="submit" class="primary">Zapisz</button>
+      <button type="button" class="ghost" id="cancelBtn">Anuluj</button>
+      <span class="sp"></span>
+      <button type="button" class="ghost danger" id="delBtn" hidden>Usuń trening</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="loginDlg">
+  <form class="dlg" id="loginForm">
+    <h2>Zaloguj się</h2>
+    <p class="note">Dziennik zapisuje dane w Twojej prywatnej bazie. Zaloguj się kontem, które utworzyłeś w Supabase.</p>
+    <div class="g">
+      <label class="f full">E-mail<input type="email" id="lEmail" autocomplete="username" required></label>
+      <label class="f full">Hasło<input type="password" id="lPass" autocomplete="current-password" required></label>
+    </div>
+    <div class="err" id="loginErr" role="alert"></div>
+    <div class="acts"><button type="submit" class="primary">Zaloguj</button></div>
+  </form>
+</dialog>
+
+<dialog id="dataDlg">
+  <div class="dlg">
+    <h2>Kopia danych</h2>
+    <h3 class="sec">Zapis w chmurze</h3>
+    <p class="note" id="fsInfo"></p>
+    <div class="dataacts" id="fsActs">
+      <button class="ghost" id="fsNew">Utwórz plik zapisu…</button>
+      <button class="ghost" id="fsOpenBtn">Wybierz istniejący plik zapisu…</button>
+      <button class="ghost" id="fsOff">Odłącz plik</button>
+    </div>
+    <div class="dataacts"><button class="ghost" id="logout" hidden>Wyloguj</button></div>
+    <h3 class="sec">Ręczna kopia</h3>
+    <p class="note">Treningi są też zapisane w tej przeglądarce na tym urządzeniu. Kopię w pliku możesz pobrać w każdej chwili – to także sposób na przeniesienie danych z komputera na telefon.</p>
+    <div class="dataacts">
+      <button class="ghost" id="expJson">Pobierz kopię (JSON)</button>
+      <button class="ghost" id="impBtn">Wczytaj kopię z pliku (zastąpi obecne dane)</button>
+      <input type="file" id="impFile" accept="application/json,.json" hidden>
+      <button class="ghost" id="expCsv">Pobierz tabelę dla Excela (CSV)</button>
+      <button class="ghost danger" id="wipe">Usuń wszystkie dane</button>
+    </div>
+    <div class="err" id="dataMsg" role="status"></div>
+    <div class="acts"><button class="primary" id="dataClose">Zamknij</button></div>
+  </div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1"></script>
+<script>
+"use strict";
+const TYPES=[["Spokojny bieg","Spokojny"],["Długie wybieganie","Spokojny"],["Regeneracyjny","Spokojny"],
+ ["Zabawa biegowa","Jakościowy"],["Bieg progowy","Jakościowy"],["Interwały","Jakościowy"],["Podbiegi","Jakościowy"],
+ ["Bieg ciągły w tempie","Jakościowy"],["Zawody","Zawody"]];
+const SEGS=["Rozgrzewka","Szybki","Przerwa (trucht)","Spokojny","Schłodzenie"];
+const CATS=["Spokojny","Jakościowy","Zawody"];
+const catOf=t=>(TYPES.find(x=>x[0]===t)||[0,"Spokojny"])[1];
+const KEY="dziennik-biegacza-v1";
+const MON=["sty","lut","mar","kwi","maj","cze","lip","sie","wrz","paź","lis","gru"];
+const DAY=["Nd","Pn","Wt","Śr","Cz","Pt","So"];
+const FULL=["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- dates & numbers ---------- */
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseISO=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const addDays=(d,n)=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);return x};
+const monday=d=>addDays(d,-((d.getDay()+6)%7));
+const isoWeek=m=>{const t=addDays(m,3);const j=new Date(t.getFullYear(),0,4);return 1+Math.round((monday(t)-monday(j))/604800000)};
+const num=s=>{s=String(s??"").trim().replace(",",".");if(s==="")return null;const v=Number(s);return isFinite(v)&&v>=0?v:NaN};
+const parseT=s=>{s=String(s??"").trim();if(!s)return null;const p=s.split(":").map(x=>x.trim()===""?NaN:Number(x.replace(",",".")));
+  if(p.length>3||p.some(x=>!isFinite(x)||x<0))return NaN;
+  return p.length===1?p[0]*60:p.length===2?p[0]*60+p[1]:p[0]*3600+p[1]*60+p[2]};
+const fT=s=>{if(s==null||!isFinite(s))return "–";s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${pad(m)}:${pad(x)}`:`${m}:${pad(x)}`};
+const fKm=(k,d=1)=>k==null?"–":(Math.round(k*10**d)/10**d).toString().replace(".",",");
+const pace=(t,k)=>t>0&&k>0?t/k:null;
+const fP=p=>p==null?"–":fT(p);
+const rangeLbl=(a,b)=>a.getMonth()===b.getMonth()?`${a.getDate()}–${b.getDate()} ${MON[b.getMonth()]}`:`${a.getDate()} ${MON[a.getMonth()]} – ${b.getDate()} ${MON[b.getMonth()]}`;
+
+/* ---------- storage ---------- */
+let db={sessions:[]},memOnly=false;
+const META="dziennik-biegacza-meta";
+const meta=()=>{try{return JSON.parse(localStorage.getItem(META))||{}}catch(e){return{}}};
+const setMeta=o=>{try{localStorage.setItem(META,JSON.stringify({...meta(),...o}))}catch(e){}};
+function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&Array.isArray(d.sessions))db=d}}catch(e){memOnly=true}}
+function save(touch=true){
+  if(touch)db.updated=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(db));if(!meta().first)setMeta({first:Date.now()})}catch(e){memOnly=true}
+  if(fh)scheduleWrite();
+  syncOut();
+  updateBanner();
+}
+const backupOld=()=>{const m=meta();return Date.now()-Math.max(m.backup||0,m.first||Date.now())>30*864e5};
+function updateBanner(){
+  const w=$("warn");let t="";
+  if(memOnly)t="Uwaga: przeglądarka nie pozwala zapisywać danych w tym trybie. Pobierz kopię danych, żeby ich nie stracić.";
+  else if(fh&&fsPaused)t=`Automatyczny zapis do pliku „${esc(fh.name)}” jest wstrzymany. <button class="ghost" data-act="resume">Wznów zapis</button>`;
+  else if(cloudErr)t="Nie udało się zapisać w chmurze. Zmiany są w pamięci urządzenia i spróbuję ponownie.";
+  else if(!fh&&!cloud&&db.sessions.length&&backupOld())t=`Od ponad 30 dni nie robiłeś kopii danych. <button class="ghost" data-act="data">Zrób kopię</button>`;
+  w.hidden=!t;w.innerHTML=t;
+}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ---------- metrics ---------- */
+function metrics(s){
+  const sg=s.segs||[];
+  const sk=sg.reduce((a,x)=>a+(x.km||0),0),st=sg.reduce((a,x)=>a+(x.time||0),0);
+  const km=s.km!=null?s.km:(sk||null),time=s.time!=null?s.time:(st||null);
+  const f=sg.filter(x=>x.type==="Szybki"&&x.km>0&&x.time>0);
+  const fk=f.reduce((a,x)=>a+x.km,0),ft=f.reduce((a,x)=>a+x.time,0);
+  return{km,time,pace:pace(time,km),cat:catOf(s.type),fastN:f.length,fastPace:f.length?ft/fk:null};
+}
+function agg(list){
+  const a={n:0,km:0,tk:0,time:0,easy:0,qual:0,race:0,qn:0,zab:0,prog:0,int:0,long:0};
+  for(const s of list){const m=metrics(s),k=m.km||0;a.n++;a.km+=k;
+    if(m.km&&m.time){a.tk+=m.km;a.time+=m.time}
+    if(m.cat==="Jakościowy"){a.qual+=k;a.qn++}else if(m.cat==="Zawody")a.race+=k;else a.easy+=k;
+    if(s.type==="Zabawa biegowa")a.zab++;if(s.type==="Bieg progowy")a.prog++;if(s.type==="Interwały")a.int++;
+    if(k>a.long)a.long=k}
+  a.pace=pace(a.time,a.tk);return a;
+}
+const sorted=()=>[...db.sessions].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.id<b.id?1:-1));
+const inRange=(from,to)=>db.sessions.filter(s=>s.date>=from&&s.date<=to);
+
+/* ---------- views ---------- */
+let view="log",filter="all",year=new Date().getFullYear();
+function render(){
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===view));
+  $("view").innerHTML=({log:vLog,cal:vCal,weeks:vWeeks,months:vMonths})[view]();
+}
+function emptyState(){return `<div class="empty"><p>Dziennik jest pusty. Dodaj pierwszy trening albo wczytaj przykładowe dane, żeby zobaczyć, jak działają podsumowania.</p>
+  <button class="primary" onclick="openForm()">Dodaj trening</button> <button class="ghost" onclick="loadSample()">Wczytaj przykładowe dane</button></div>`}
+function rowHTML(s){
+  const m=metrics(s),d=parseISO(s.date),c=m.cat;
+  const fast=m.fastN?`<span>${m.fastN} szybk${m.fastN===1?"i":"ie"} · ${fP(m.fastPace)}/km</span>`:"";
+  return `<button class="row" data-id="${s.id}">
+    <span class="d"><b>${DAY[d.getDay()]}</b><span>${d.getDate()}.${pad(d.getMonth()+1)}</span></span>
+    <span class="t"><span class="nm">${esc(s.name||s.type)}</span><span class="sub"><i class="chip c-${c}">${esc(s.type)}</i>${fast}</span></span>
+    <span class="n"><b>${m.km!=null?fKm(m.km)+" km":"–"}</b><small>${m.time!=null?fT(m.time):"–"}${m.pace?" · "+fP(m.pace)+"/km":""}</small></span></button>`;
+}
+function vLog(){
+  if(!db.sessions.length)return emptyState();
+  const pills=[["all","Wszystkie"],["Spokojny","Spokojne"],["Jakościowy","Jakościowe"],["Zawody","Zawody"]]
+    .map(([k,l])=>`<button data-f="${k}" aria-pressed="${filter===k}">${l}</button>`).join("");
+  let out=`<div class="bar-tools"><div class="pills">${pills}</div></div>`;
+  const list=sorted().filter(s=>filter==="all"||catOf(s.type)===filter);
+  if(!list.length)return out+`<div class="empty"><p>Brak treningów w tej kategorii.</p></div>`;
+  let cur=null,html="";const groups=[];
+  for(const s of list){const m=monday(parseISO(s.date)),k=iso(m);
+    if(!cur||cur.k!==k){cur={k,m,items:[]};groups.push(cur)}cur.items.push(s)}
+  for(const g of groups){
+    const a=agg(g.items);
+    html+=`<div class="wk"><span><b>Tydzień ${isoWeek(g.m)}</b> · ${rangeLbl(g.m,addDays(g.m,6))}</span><span>${fKm(a.km)} km</span></div>`;
+    for(const s of g.items)html+=rowHTML(s);
+  }
+  return out+html;
+}
+let calY=new Date().getFullYear(),calM=new Date().getMonth(),selDay=iso(new Date());
+function vCal(){
+  const first=new Date(calY,calM,1),last=new Date(calY,calM+1,0),today=iso(new Date());
+  const by={};for(const s of db.sessions)(by[s.date]=by[s.date]||[]).push(s);
+  let h=`<div class="cal-h"><button class="ghost" data-cal="-1" aria-label="Poprzedni miesiąc">‹</button><h2>${FULL[calM]} ${calY}</h2><button class="ghost" data-cal="1" aria-label="Następny miesiąc">›</button><button class="ghost" data-cal="0">Dziś</button></div><div class="cal">`;
+  h+=["Pn","Wt","Śr","Cz","Pt","So","Nd"].map(n=>`<div class="cn">${n}</div>`).join("")+`<div class="cn">Tydz.</div>`;
+  for(let w=monday(first);w<=last;w=addDays(w,7)){
+    let wl=[];
+    for(let i=0;i<7;i++){
+      const d=addDays(w,i),ds=iso(d),ss=by[ds]||[];wl=wl.concat(ss);
+      const a=agg(ss),cats=ss.map(s=>catOf(s.type));
+      const cls=["cd",d.getMonth()!==calM?"out":"",ds===today?"today":"",ds===selDay?"sel":"",cats.includes("Zawody")?"hr":cats.includes("Jakościowy")?"hq":""].filter(Boolean).join(" ");
+      h+=`<button class="${cls}" data-day="${ds}" aria-label="${d.getDate()} ${FULL[d.getMonth()]}${a.km?", "+fKm(a.km)+" km":""}"><span class="dn">${d.getDate()}</span><span class="km">${a.km?fKm(a.km):""}</span><span class="dots">${cats.map(c=>`<i class="c-${c}"></i>`).join("")}</span></button>`;
+    }
+    const wa=agg(wl);h+=`<div class="cs">${wa.km?fKm(wa.km):""}</div>`;
+  }
+  h+=`</div>`;
+  if(selDay){
+    const d=parseISO(selDay),ss=db.sessions.filter(s=>s.date===selDay);
+    h+=`<div id="dayPanel"><div class="wk"><span><b>${DAY[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}</b></span><button class="ghost" data-add="${selDay}">+ Dodaj w tym dniu</button></div>`;
+    h+=ss.length?ss.map(rowHTML).join(""):`<div class="note" style="margin:0 2px 8px">Brak treningów tego dnia.</div>`;
+    h+=`</div>`;
+  }
+  return h+card(FULL[calM],String(calY),agg(inRange(iso(first),iso(last))));
+}
+function yearSelect(){
+  const ys=new Set(db.sessions.map(s=>+s.date.slice(0,4)));ys.add(new Date().getFullYear());ys.add(year);
+  return `<div class="bar-tools"><label class="note">Rok <select class="yr" id="yrSel">${[...ys].sort((a,b)=>b-a).map(y=>`<option${y===year?" selected":""}>${y}</option>`).join("")}</select></label></div>`;
+}
+function card(title,sub,a){
+  const t=a.km||1,pe=a.easy/t*100,pq=a.qual/t*100,pr=a.race/t*100;
+  return `<div class="card"><div class="top"><div><h3>${title}</h3><div class="rng">${sub}</div></div><div class="big">${fKm(a.km)}<small>km</small></div></div>
+  <div class="split" title="Spokojne / jakościowe / zawody">${a.km?`<i class="e" style="width:${pe}%"></i><i class="q" style="width:${pq}%"></i><i class="r" style="width:${pr}%"></i>`:""}</div>
+  <dl class="st">
+   <div><dt>Treningi</dt><dd>${a.n}</dd></div>
+   <div><dt>Czas</dt><dd>${a.time?fT(a.time):"–"}</dd></div>
+   <div><dt>Śr. tempo</dt><dd>${a.pace?fP(a.pace)+"<small>/km</small>":"–"}</dd></div>
+   <div><dt>Najdłuższy</dt><dd>${a.long?fKm(a.long)+"<small> km</small>":"–"}</dd></div>
+   <div><dt>Jakościowe</dt><dd>${a.qn}<small> · ${fKm(a.qual)} km${a.km?" · "+Math.round(a.qual/a.km*100)+"%":""}</small></dd></div>
+   <div><dt>Zabawy</dt><dd>${a.zab}</dd></div>
+   <div><dt>Progi</dt><dd>${a.prog}</dd></div>
+   <div><dt>Interwały</dt><dd>${a.int}</dd></div>
+  </dl></div>`;
+}
+function chart(items,labelEvery){
+  const W=720,H=190,pl=36,pb=24,pt=12,n=items.length,bw=(W-pl)/n;
+  const mx=Math.max(10,...items.map(i=>i.a.km)),sc=v=>(H-pb-pt)*v/mx;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Dystans: spokojny, jakościowy, zawody">`;
+  [0,.5,1].forEach(f=>{const y=H-pb-sc(mx*f);s+=`<line x1="${pl}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="0" y="${y+3}">${Math.round(mx*f)}</text>`});
+  items.forEach((it,i)=>{
+    let y=H-pb;const x=pl+i*bw+bw*.15,w=bw*.7;
+    const tip=`<title>${esc(it.tip)}: ${fKm(it.a.km)} km</title>`;
+    [["e",it.a.easy],["q",it.a.qual],["r",it.a.race]].forEach(([c,v])=>{if(v>0){const h=sc(v);y-=h;s+=`<rect class="${c}" x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5">${tip}</rect>`}});
+    if(i%labelEvery===0)s+=`<text x="${x+w/2}" y="${H-5}" text-anchor="middle">${esc(it.lbl)}</text>`;
+  });
+  return `<div class="chart">${s}</svg><div class="legend"><span><i style="background:var(--easy)"></i>Spokojne</span><span><i style="background:var(--qual)"></i>Jakościowe</span><span><i style="background:var(--race)"></i>Zawody</span></div></div>`;
+}
+function vWeeks(){
+  if(!db.sessions.length)return emptyState();
+  let m=monday(new Date(year,0,4));const weeks=[];
+  while(addDays(m,3).getFullYear()===year){weeks.push(m);m=addDays(m,7)}
+  const data=weeks.map(w=>({w,a:agg(inRange(iso(w),iso(addDays(w,6))))}));
+  const items=data.map(d=>({a:d.a,lbl:String(isoWeek(d.w)),tip:`Tydzień ${isoWeek(d.w)} (${rangeLbl(d.w,addDays(d.w,6))})`}));
+  let out=yearSelect()+chart(items,4)+card(`Razem w ${year}`,"od 1 stycznia do 31 grudnia",agg(inRange(`${year}-01-01`,`${year}-12-31`)));
+  const shown=data.filter(d=>d.a.n).reverse();
+  out+=shown.length?shown.map(d=>card(`Tydzień ${isoWeek(d.w)}`,rangeLbl(d.w,addDays(d.w,6)),d.a)).join(""):`<div class="empty"><p>Brak treningów w ${year}.</p></div>`;
+  return out;
+}
+function vMonths(){
+  if(!db.sessions.length)return emptyState();
+  const data=MON.map((_,i)=>{const mm=pad(i+1);return{i,a:agg(inRange(`${year}-${mm}-01`,`${year}-${mm}-31`))}});
+  const full=FULL;
+  const items=data.map(d=>({a:d.a,lbl:MON[d.i],tip:full[d.i]}));
+  let out=yearSelect()+chart(items,1)+card(`Razem w ${year}`,"od 1 stycznia do 31 grudnia",agg(inRange(`${year}-01-01`,`${year}-12-31`)));
+  const shown=data.filter(d=>d.a.n).reverse();
+  out+=shown.length?shown.map(d=>card(full[d.i],String(year),d.a)).join(""):`<div class="empty"><p>Brak treningów w ${year}.</p></div>`;
+  return out;
+}
+
+/* ---------- form ---------- */
+let editId=null;
+$("fType").innerHTML=TYPES.map(t=>`<option>${t[0]}</option>`).join("");
+function segRow(s={}){
+  const d=document.createElement("div");d.className="seg";
+  d.innerHTML=`<div class="l1"><select class="sg-type" aria-label="Rodzaj odcinka">${SEGS.map(t=>`<option${t===(s.type||"Szybki")?" selected":""}>${t}</option>`).join("")}</select>
+   <button type="button" class="x" aria-label="Usuń odcinek">×</button></div>
+   <div class="l2"><label class="f">Km<input class="sg-km" inputmode="decimal" value="${s.km!=null?fKm(s.km,2):""}"></label>
+   <label class="f">Czas<input class="sg-time" inputmode="numeric" value="${s.time!=null?fT(s.time):""}"></label>
+   <label class="f">Tempo /km<input class="sg-pace" inputmode="numeric" value="${s.km&&s.time?fP(s.time/s.km):""}"></label>
+   <label class="f">Tętno<input class="sg-hr" inputmode="numeric" value="${s.hr??""}"></label></div>`;
+  return d;
+}
+$("segList").addEventListener("click",e=>{if(e.target.classList.contains("x"))e.target.closest(".seg").remove()});
+$("segList").addEventListener("change",e=>{
+  const seg=e.target.closest(".seg");if(!seg)return;
+  const q=c=>seg.querySelector(c),km=num(q(".sg-km").value),t=parseT(q(".sg-time").value),p=parseT(q(".sg-pace").value);
+  if(e.target.classList.contains("sg-pace")&&km>0&&p>0)q(".sg-time").value=fT(p*km);
+  else if(km>0&&t>0&&(e.target.classList.contains("sg-time")||e.target.classList.contains("sg-km")))q(".sg-pace").value=fP(t/km);
+});
+$("segAdd").onclick=()=>$("segList").appendChild(segRow());
+$("segDup").onclick=()=>{
+  const last=[...document.querySelectorAll("#segList .seg")].pop();
+  if(!last){$("segList").appendChild(segRow());return}
+  const c=last.cloneNode(true);c.querySelector(".sg-type").value=last.querySelector(".sg-type").value;
+  c.querySelectorAll("input").forEach((i,k)=>i.value=last.querySelectorAll("input")[k].value);
+  $("segList").appendChild(c);
+};
+function openForm(id,date){
+  editId=id||null;const s=id?db.sessions.find(x=>x.id===id):null;
+  $("formTitle").textContent=s?"Edytuj trening":"Nowy trening";
+  $("fDate").value=s?s.date:(date||iso(new Date()));$("fType").value=s?s.type:TYPES[0][0];
+  $("fName").value=s?.name||"";$("fKm").value=s?.km!=null?fKm(s.km,2):"";$("fTime").value=s?.time!=null?fT(s.time):"";
+  $("fHr").value=s?.hr??"";$("fRpe").value=s?.rpe??"";$("fNotes").value=s?.notes||"";
+  $("segList").replaceChildren(...(s?.segs||[]).map(segRow));
+  $("delBtn").hidden=!s;$("err").textContent="";$("formDlg").showModal();
+}
+$("addBtn").onclick=()=>openForm(null,view==="cal"?selDay:null);
+$("cancelBtn").onclick=()=>$("formDlg").close();
+$("form").onsubmit=e=>{
+  e.preventDefault();const bad=m=>{$("err").textContent=m;return false};
+  const km=num($("fKm").value),time=parseT($("fTime").value),hr=num($("fHr").value),rpe=num($("fRpe").value);
+  if(!$("fDate").value)return bad("Wybierz datę treningu.");
+  if(isNaN(km))return bad("Dystans wpisz jako liczbę, np. 8,7.");
+  if(isNaN(time))return bad("Czas wpisz jako mm:ss lub g:mm:ss, np. 45:00 albo 1:05:30.");
+  if(isNaN(hr)||isNaN(rpe))return bad("Tętno i odczucie wpisz jako liczby.");
+  if(rpe!=null&&(rpe<1||rpe>10))return bad("Odczucie to liczba od 1 do 10.");
+  const segs=[];
+  for(const r of document.querySelectorAll("#segList .seg")){
+    const sk=num(r.querySelector(".sg-km").value),sp=parseT(r.querySelector(".sg-pace").value);let st=parseT(r.querySelector(".sg-time").value);
+    const sh=num(r.querySelector(".sg-hr").value);
+    if([sk,st,sp,sh].some(Number.isNaN))return bad("Sprawdź odcinki: dystans i tętno to liczby, czas i tempo wpisz jako mm:ss.");
+    if(st==null&&sp>0&&sk>0)st=sp*sk;
+    if(sk!=null||st!=null)segs.push({type:r.querySelector(".sg-type").value,km:sk,time:st,hr:sh});
+  }
+  if(km==null&&time==null&&!segs.length)return bad("Wpisz dystans lub dodaj odcinki.");
+  const rec={id:editId||uid(),date:$("fDate").value,type:$("fType").value,name:$("fName").value.trim(),km,time,hr,rpe,notes:$("fNotes").value.trim(),segs};
+  if(editId)db.sessions=db.sessions.map(x=>x.id===editId?rec:x);else db.sessions.push(rec);
+  year=+rec.date.slice(0,4);save();$("formDlg").close();render();
+};
+$("delBtn").onclick=()=>{if(confirm("Usunąć ten trening?")){db.sessions=db.sessions.filter(x=>x.id!==editId);save();$("formDlg").close();render()}};
+
+/* ---------- events ---------- */
+document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("button");if(b){view=b.dataset.v;render()}};
+$("view").addEventListener("click",e=>{
+  const r=e.target.closest(".row");if(r)return openForm(r.dataset.id);
+  const f=e.target.closest("[data-f]");if(f){filter=f.dataset.f;render();return}
+  const c=e.target.closest("[data-cal]");
+  if(c){const k=+c.dataset.cal;if(k===0){const n=new Date();calY=n.getFullYear();calM=n.getMonth();selDay=iso(n)}
+    else{calM+=k;if(calM<0){calM=11;calY--}if(calM>11){calM=0;calY++}}render();return}
+  const dd=e.target.closest("[data-day]");
+  if(dd){selDay=dd.dataset.day;const d=parseISO(selDay);calY=d.getFullYear();calM=d.getMonth();render();
+    const el=$("dayPanel");if(el)el.scrollIntoView({block:"nearest"});return}
+  const ad=e.target.closest("[data-add]");if(ad)openForm(null,ad.dataset.add);
+});
+$("warn").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;
+  if(b.dataset.act==="resume")fsResume();else{renderFsInfo();$("dataMsg").textContent="";$("dataDlg").showModal()}});
+$("view").addEventListener("change",e=>{if(e.target.id==="yrSel"){year=+e.target.value;render()}});
+
+/* ---------- data tools ---------- */
+const dl=(name,text,type)=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)};
+$("dataBtn").onclick=()=>{$("dataMsg").textContent="";renderFsInfo();$("dataDlg").showModal()};
+$("dataClose").onclick=()=>$("dataDlg").close();
+$("expJson").onclick=()=>{setMeta({backup:Date.now()});updateBanner();dl(`dziennik-biegacza-${iso(new Date())}.json`,JSON.stringify(db,null,1),"application/json");$("dataMsg").textContent="Kopia pobrana."};
+$("expCsv").onclick=()=>{
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=[["Data","Nazwa","Typ","Kategoria","Dystans km","Czas","Tempo min/km","Tętno śr.","Odczucie","Tempo odc. szybkich","Notatki"]];
+  [...db.sessions].sort((a,b)=>a.date<b.date?-1:1).forEach(s=>{const m=metrics(s);
+    rows.push([s.date,s.name,s.type,m.cat,m.km!=null?fKm(m.km,2):"",m.time!=null?fT(m.time):"",fP(m.pace).replace("–",""),s.hr??"",s.rpe??"",fP(m.fastPace).replace("–",""),s.notes])});
+  dl(`dziennik-biegacza-${iso(new Date())}.csv`,"\ufeff"+rows.map(r=>r.map(q).join(";")).join("\r\n"),"text/csv;charset=utf-8");
+  $("dataMsg").textContent="Tabela pobrana.";
+};
+$("impBtn").onclick=()=>$("impFile").click();
+$("impFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||!Array.isArray(d.sessions))throw 0;
+    if(!confirm(`Wczytać ${d.sessions.length} treningów? Obecne dane zostaną zastąpione.`))return;
+    db={sessions:d.sessions};save();render();$("dataMsg").textContent="Kopia wczytana."}catch(x){$("dataMsg").textContent="Ten plik nie wygląda na kopię z tej aplikacji."}};
+  r.readAsText(f);e.target.value="";
+};
+$("wipe").onclick=()=>{if(confirm("Usunąć wszystkie treningi? Tej operacji nie można cofnąć."+(fh?" Plik zapisu na dysku też zostanie wyczyszczony.":""))){db={sessions:[]};save();render();$("dataMsg").textContent="Dane usunięte."}};
+
+function loadSample(){
+  const m0=monday(new Date()),seg=(type,km,t,hr)=>({type,km,time:parseT(t),hr});
+  const mk=(off,type,name,km,t,hr,rpe,segs=[])=>({id:uid(),date:iso(addDays(m0,off)),type,name,km,time:parseT(t),hr,rpe,notes:"(przykład)",segs});
+  const L=[];
+  for(let w=-3;w<=0;w++){const o=w*7;
+    L.push(mk(o,"Spokojny bieg","Rozbieganie",8+(w+3)*.5,"0:"+(46+(w+3))+":00",140,3));
+    const q=[["Interwały","5×1 km",[seg("Rozgrzewka",2,"12:00",130),...Array(5).fill(0).flatMap(()=>[seg("Szybki",1,"3:52",168),seg("Przerwa (trucht)",.4,"2:30",140)]),seg("Schłodzenie",1.5,"9:00",135)]],
+     ["Bieg progowy","3×2 km próg",[seg("Rozgrzewka",2,"12:00",130),...Array(3).fill(0).flatMap(()=>[seg("Szybki",2,"8:30",160),seg("Przerwa (trucht)",.4,"2:30",138)]),seg("Schłodzenie",1.5,"9:00",135)]],
+     ["Zabawa biegowa","8×1' szybko",[seg("Rozgrzewka",2,"12:00",130),...Array(8).fill(0).flatMap(()=>[seg("Szybki",.28,"1:00",165),seg("Spokojny",.18,"1:00",145)]),seg("Schłodzenie",2,"12:00",135)]],
+     ["Bieg progowy","5 km próg",[seg("Rozgrzewka",2,"12:00",130),seg("Szybki",5,"23:30",162),seg("Schłodzenie",1.5,"9:00",135)]]][w+3];
+    L.push(mk(o+2,q[0],q[1],null,null,null,7,q[2]));
+    if(o+5<=((new Date()-m0)/864e5))L.push(mk(o+5,"Długie wybieganie","Długie w lesie",14+(w+3)*.5,"1:18:00",146,5));
+  }
+  db.sessions.push(...L);year=new Date().getFullYear();save();render();
+}
+
+/* ---------- automatic save to a file on disk (Chrome / Edge on desktop) ---------- */
+const FSA=false;
+const FTYPES=[{description:"Dziennik biegacza (JSON)",accept:{"application/json":[".json"]}}];
+var fh=null,fsPaused=false,fsTimer=null;
+const idbOpen=()=>new Promise((res,rej)=>{const r=indexedDB.open("dziennik-biegacza-fs",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function kvGet(k){try{const d=await idbOpen();return await new Promise((res,rej)=>{const q=d.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}catch(e){return null}}
+async function kvSet(k,v){try{const d=await idbOpen();await new Promise((res,rej)=>{const t=d.transaction("kv","readwrite");if(v==null)t.objectStore("kv").delete(k);else t.objectStore("kv").put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}catch(e){}}
+const msg=t=>{$("dataMsg").textContent=t};
+async function readData(h){const d=JSON.parse(await(await h.getFile()).text());if(!d||!Array.isArray(d.sessions))throw new Error("format");return d}
+async function writeFile(){
+  if(!fh)return;
+  try{const w=await fh.createWritable();await w.write(JSON.stringify(db,null,1));await w.close();fsPaused=false}
+  catch(e){fsPaused=true}
+  updateBanner();renderFsInfo();
+}
+function scheduleWrite(){clearTimeout(fsTimer);fsTimer=setTimeout(writeFile,500)}
+function renderFsInfo(){
+  const n=fh?esc(fh.name):"";
+  $("fsActs").hidden=!FSA;$("fsOff").hidden=!fh;
+  $("logout").hidden=!cloud;
+  $("fsInfo").innerHTML=!FSA?(cloud?(cloudErr?"Nie udało się zapisać zmian w chmurze ("+esc(cloudErr)+"). Zmiany są w pamięci urządzenia, spróbuję ponownie przy następnej zmianie.":"Każda zmiana zapisuje się od razu w Twojej bazie Supabase. Zalogowany: <b>"+esc(userEmail)+"</b>. Te same dane zobaczysz na każdym urządzeniu po zalogowaniu."):(window.DZIENNIK_CONFIG&&window.DZIENNIK_CONFIG.url?"Zapis w chmurze jest nieaktywny (brak połączenia lub logowania). Dane zostają w pamięci urządzenia – rób ręczną kopię poniżej.":"Chmura nie jest skonfigurowana – uzupełnij plik config.js. Do tego czasu dane zostają w pamięci tego urządzenia."))
+   :fh?`Każda zmiana zapisuje się od razu do pliku <b>${n}</b>.${fsPaused?" Zapis jest teraz wstrzymany – użyj przycisku „Wznów zapis” u góry strony.":""} Jeśli plik leży w folderze OneDrive, Dysku Google, Dropbox lub iCloud Drive, jest jednocześnie kopią w chmurze.`
+   :"Wskaż plik na dysku, a każda zmiana będzie do niego zapisywana automatycznie. Najlepiej umieść go w folderze synchronizowanym z chmurą (OneDrive, Dysk Google, Dropbox, iCloud Drive) – wtedy masz też kopię w chmurze.";
+}
+async function fsCreate(){
+  try{const h=await showSaveFilePicker({suggestedName:"dziennik-biegacza.json",types:FTYPES});
+    fh=h;await kvSet("fh",h);await writeFile();msg(fsPaused?"Nie udało się zapisać do pliku.":"Zapis do pliku włączony.")}
+  catch(e){if(e.name!=="AbortError")msg("Nie udało się utworzyć pliku: "+e.message)}
+}
+async function fsOpen(){
+  try{const [h]=await showOpenFilePicker({types:FTYPES});
+    if(await h.requestPermission({mode:"readwrite"})!=="granted")return msg("Bez zgody na zapis nie mogę używać tego pliku.");
+    let d;try{d=await readData(h)}catch(x){return msg("Ten plik nie wygląda na zapis z tej aplikacji.")}
+    if(db.sessions.length&&!confirm(`Plik zawiera ${d.sessions.length} treningów. Wczytać je? Dane z przeglądarki (${db.sessions.length}) zostaną zastąpione.`))return;
+    db=d;fh=h;await kvSet("fh",h);save(false);render();msg(`Wczytano ${d.sessions.length} treningów. Zapis do pliku włączony.`);
+  }catch(e){if(e.name!=="AbortError")msg("Nie udało się otworzyć pliku: "+e.message)}
+}
+async function fsSync(){
+  try{
+    const d=await readData(fh),fu=d.updated||0,lu=db.updated||0;
+    if(fu>lu){
+      if(!db.sessions.length||confirm(`Plik „${fh.name}” jest nowszy niż dane w przeglądarce (${d.sessions.length} vs ${db.sessions.length} treningów). OK – wczytaj dane z pliku. Anuluj – nadpisz plik danymi z przeglądarki.`)){db=d;save(false);render()}
+      else await writeFile();
+    }else if(lu>fu)await writeFile();
+    fsPaused=false;
+  }catch(e){fsPaused=true}
+  updateBanner();renderFsInfo();
+}
+async function fsResume(){
+  try{if(await fh.requestPermission({mode:"readwrite"})==="granted")await fsSync()}catch(e){}
+}
+async function fsInit(){
+  if(!FSA)return;const h=await kvGet("fh");if(!h)return;fh=h;
+  let p="prompt";try{p=await h.queryPermission({mode:"readwrite"})}catch(e){}
+  if(p==="granted")await fsSync();else{fsPaused=true;updateBanner()}
+}
+$("fsNew").onclick=fsCreate;$("fsOpenBtn").onclick=fsOpen;
+$("fsOff").onclick=async()=>{fh=null;fsPaused=false;await kvSet("fh",null);updateBanner();renderFsInfo();msg("Plik odłączony. Dane zostają w przeglądarce.")};
+
+
+/* ---------- Supabase sync ---------- */
+const TABLE="treningi",CFG=window.DZIENNIK_CONFIG||{};
+var cloud=false,cloudErr=null,sb=null,userEmail="",remote=new Map(),gotServer=false,syncQ=Promise.resolve(),retryT=null;
+const sj=s=>JSON.stringify(s);
+const errTxt=e=>(e&&(e.message||e.code))||"error";
+function adopt(snap){remote=new Map(snap.docs.map(d=>[d.id,sj(d.data())]));db.sessions=snap.docs.map(d=>JSON.parse(sj(d.data())));save(false);render()}
+function applySnap(snap){
+  if(!gotServer){
+    gotServer=true;
+    if(snap.empty&&db.sessions.length){remote=new Map();syncOut();return}
+    return adopt(snap);
+  }
+  const cur=new Map(db.sessions.map(s=>[s.id,sj(s)]));
+  const unsynced=[...cur].some(([id,j])=>remote.get(id)!==j)||[...remote.keys()].some(id=>!cur.has(id));
+  if(!unsynced)adopt(snap);
+}
+async function pull(){
+  if(!sb||!cloud)return;
+  try{
+    let all=[],from=0;
+    for(;;){
+      const {data,error}=await sb.from(TABLE).select("id,data").order("id").range(from,from+999);
+      if(error)throw error;
+      all=all.concat(data);if(data.length<1000)break;from+=1000;
+    }
+    cloudErr=null;
+    applySnap({docs:all.map(r=>({id:r.id,data:()=>r.data})),empty:!all.length});
+  }catch(e){cloudErr=errTxt(e)}
+  updateBanner();renderFsInfo();
+}
+function syncOut(){
+  if(!cloud||!gotServer)return;
+  syncQ=syncQ.then(async()=>{
+    try{
+      const changed=db.sessions.filter(s=>remote.get(s.id)!==sj(s));
+      for(let i=0;i<changed.length;i+=200){
+        const part=changed.slice(i,i+200);
+        const {error}=await sb.from(TABLE).upsert(part.map(s=>({id:s.id,data:JSON.parse(sj(s)),updated_at:new Date().toISOString()})));
+        if(error)throw error;
+        part.forEach(s=>remote.set(s.id,sj(s)));
+      }
+      const cur=new Set(db.sessions.map(s=>s.id)),gone=[...remote.keys()].filter(id=>!cur.has(id));
+      for(let i=0;i<gone.length;i+=100){
+        const part=gone.slice(i,i+100);
+        const {error}=await sb.from(TABLE).delete().in("id",part);
+        if(error)throw error;
+        part.forEach(id=>remote.delete(id));
+      }
+      cloudErr=null;
+    }catch(e){cloudErr=errTxt(e);clearTimeout(retryT);retryT=setTimeout(syncOut,20000)}
+    updateBanner();renderFsInfo();
+  });
+}
+function showLogin(){const d=$("loginDlg");if(!d.open)d.showModal()}
+function startCloud(email){userEmail=email||"";cloud=true;gotServer=false;$("loginDlg").open&&$("loginDlg").close();pull()}
+async function cloudInit(){
+  if(!CFG.url||!CFG.key||!window.supabase){updateBanner();return}
+  try{
+    sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true}});
+    sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT"){cloud=false;gotServer=false;remote=new Map();userEmail="";updateBanner();showLogin()}});
+    const {data}=await sb.auth.getSession();
+    if(data&&data.session)startCloud(data.session.user.email);else showLogin();
+  }catch(e){cloudErr=errTxt(e);updateBanner()}
+}
+$("loginDlg").addEventListener("cancel",e=>e.preventDefault());
+$("loginForm").onsubmit=async e=>{
+  e.preventDefault();$("loginErr").textContent="";
+  const {data,error}=await sb.auth.signInWithPassword({email:$("lEmail").value.trim(),password:$("lPass").value});
+  if(error){$("loginErr").textContent="Nie udało się zalogować: "+(/invalid login/i.test(error.message)?"zły e-mail lub hasło.":error.message);return}
+  $("lPass").value="";startCloud(data.user.email);
+};
+$("logout").onclick=async()=>{$("dataDlg").close();if(sb)await sb.auth.signOut()};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&cloud){syncOut();pull()}});
+window.addEventListener("online",()=>{if(cloud){syncOut();pull()}});
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+load();save(false);render();fsInit();cloudInit();
+</script>
+</body>
+</html>
